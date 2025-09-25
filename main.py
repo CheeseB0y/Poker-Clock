@@ -18,12 +18,11 @@ class PokerClock:
 
         self.round_index = 0
         self.round_num = tk.StringVar(value=f"Round: {rounds[self.round_index].num}")
-        self.b_blind = tk.StringVar(value=f"Big Blind: {rounds[self.round_index].b_blind}")
-        self.s_blind = tk.StringVar(value=f"Small Blind: {rounds[self.round_index].s_blind}")
+        self.b_blind = tk.StringVar(value=f"Big Blind: {rounds[self.round_index].b_blind:,}")
+        self.s_blind = tk.StringVar(value=f"Small Blind: {rounds[self.round_index].s_blind:,}")
 
-        self.timer_set = rounds[self.round_index].time
-        self.time_remaining = self.timer_set * 60
-        self.time_display = tk.StringVar(value=f"{self.timer_set}:00")
+        self.time_remaining = rounds[self.round_index].time * 60
+        self.time_display = tk.StringVar(value=self.format_time_remaining())
 
         self.round_number_label = tk.Label(self.root, textvariable=self.round_num)
         self.round_number_label.pack(padx=10, pady=10)
@@ -46,20 +45,25 @@ class PokerClock:
         self.root.mainloop()
 
     def start_timer(self):
+        self.pause = False
         self.countdown()
 
     def countdown(self):
-        if self.time_remaining > 0:
-            mins = self.time_remaining / 60
-            secs = self.time_remaining % 60
-            if secs < 10:
-                secs = "0" + str(secs)
-            self.time_display.set(f"{math.floor(mins)}:{secs}")
+        if self.time_remaining > 0 and self.pause == False:
+            self.time_display.set(self.format_time_remaining())
             self.time_remaining -= 1
             self.root.after(1000, self.countdown)
         else:
             self.time_display.set("0:00")
             self.flash_screen()
+
+    def format_time_remaining(self): 
+        mins = self.time_remaining / 60
+        secs = self.time_remaining % 60
+        if secs < 10:
+            secs = "0" + str(secs)
+        return f"{math.floor(mins)}:{secs}"
+
     
     # This needs to be like this for some reason
     def flash_screen(self, duration=10, speed=500):
@@ -72,12 +76,11 @@ class PokerClock:
 
     def next_round(self):
         self.round_index += 1
-        self.timer_set = rounds[self.round_index].time
-        self.time_remaining = self.timer_set * 60
-        self.time_display.set(value=f"{self.timer_set}:00")
+        self.time_remaining = rounds[self.round_index].time * 60
+        self.time_display.set(value=self.format_time_remaining())
         self.round_num.set(f"Round: {rounds[self.round_index].num}")
-        self.b_blind.set(f"Big Blind: {rounds[self.round_index].b_blind}")
-        self.s_blind.set(f"Small Blind: {rounds[self.round_index].s_blind}")
+        self.b_blind.set(f"Big Blind: {rounds[self.round_index].b_blind:,}")
+        self.s_blind.set(f"Small Blind: {rounds[self.round_index].s_blind:,}")
 
 if __name__ == '__main__':
     # Fix hard coded values later
