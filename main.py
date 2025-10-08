@@ -19,10 +19,13 @@ class PokerClock:
         self.s_blind = tk.StringVar(value=f"Small Blind: {rounds[self.round_index].s_blind:,}")
         self.time_remaining = rounds[self.round_index].time * 60
         self.time_display = tk.StringVar(value=self.format_time_remaining())
+        
+        self.bg_color="#0B6623"
+        self.pause = True
 
         self.root.title("Poker Clock")
         self.root.geometry("1200x900")
-        self.root.configure(bg="green")
+        self.root.configure(bg=self.bg_color)
 
         
         menubar = tk.Menu(self.root)
@@ -34,29 +37,37 @@ class PokerClock:
         option_menu.add_command(label="Edit Game")
         option_menu.add_command(label="Exit", command=quit)
 
-        self.root.columnconfigure(0, weight=1)
-        self.root.columnconfigure(1, weight=1)
-        self.root.columnconfigure(2, weight=1)
+        self.root.columnconfigure((0, 1, 2), weight=1)
+        self.root.rowconfigure((0, 1, 2, 3), weight=1)
         
         round_frame = tk.Frame(self.root, pady=10, bg="black")
         round_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
-        round_frame.columnconfigure(0, weight=1)
-        round_frame.columnconfigure(1, weight=1)
-        round_frame.columnconfigure(2, weight=1)
 
-        round_number_label = tk.Label(round_frame, textvariable=self.round_num, bg="black", fg="white").grid(row=0, column=1, sticky='NESW')
-        timer_label = tk.Label(self.root, textvariable=self.time_display, bg="green", fg="white", font={"Arial", 64}).grid(row=1, column=0, columnspan=2, rowspan=2, sticky='NESW')
-        timer_button = tk.Button(self.root, text="Start timer", command=self.start_timer, bg="red", fg="white").grid(row=1, column=2, sticky='NESW')
-        s_blind_label = tk.Label(self.root, textvariable=self.s_blind, bg="red", fg="white").grid(row=3, column=0, sticky='NESW')
-        b_blind_label = tk.Label(self.root, textvariable=self.b_blind, bg="black", fg="white").grid(row=3, column=1, sticky='NESW')
-        next_button = tk.Button(self.root, text="Next round", command=self.next_round, bg="black", fg="white").grid(row=2, column=2, sticky='NESW')
-        blank_corner = tk.Label(self.root, bg="red").grid(row=3, column=2, sticky="NESW")
+        button_frame = tk.Frame(self.root, bg=self.bg_color)
+        button_frame.grid(row=1, column=2, rowspan=2, sticky="NESW")
+
+        time_frame = tk.Frame(self.root, bg=self.bg_color)
+        time_frame.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="NESW")
+
+        blind_frame = tk.Frame(self.root, bg=self.bg_color)
+        blind_frame.grid(row=3, column=0, columnspan=2, sticky="NESW")
+
+        round_number_label = tk.Label(round_frame, textvariable=self.round_num, bg="black", fg="white", font=("Arial", 60, "bold")).pack(fill="both", expand=True)
+        timer_label = tk.Label(time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold")).pack(fill="both", expand=True)
+        timer_button = tk.Button(button_frame, text="Start timer", command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
+        next_button = tk.Button(button_frame, text="Next round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
+        s_blind_label = tk.Label(blind_frame, textvariable=self.s_blind, bg="red", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
+        b_blind_label = tk.Label(blind_frame, textvariable=self.b_blind, bg="black", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
+        
 
         self.root.mainloop()
 
     def start_timer(self):
-        self.pause = False
-        self.countdown()
+        if self.pause:
+            self.pause = False
+            self.countdown()
+        else:
+            self.pause_timer()
 
     def pause_timer(self):
         self.pause = True
@@ -66,6 +77,8 @@ class PokerClock:
             self.time_display.set(self.format_time_remaining())
             self.time_remaining -= 1
             self.root.after(1000, self.countdown)
+        elif self.pause:
+            pass
         else:
             self.time_display.set("0:00")
             self.flash_screen()
@@ -79,12 +92,15 @@ class PokerClock:
 
     
     # This needs to be like this for some reason
+    # Fix later
     def flash_screen(self, duration=10, speed=500):
         if duration > 0:
-            self.root.configure(bg="black")
+            self.bg_color = "black"
             self.root.after(speed, lambda: self.flash_screen_2(duration, speed))
+        else:
+            self.bg_color = "#0B6623"
     def flash_screen_2(self, duration, speed):
-            self.root.configure(bg="white")
+            self.bg_color = "white"
             self.root.after(speed, lambda: self.flash_screen(duration - 1, speed))
 
     def next_round(self):
@@ -99,7 +115,7 @@ class PokerClock:
         game_editor_window = tk.Toplevel(self.root)
         game_editor_window.title("Game Editor")
         game_editor_window.geometry("800x600")
-        game_editor_window.configure(bg="green")
+        game_editor_window.configure(bg=self.bg_color)
 
         game_editor_window.columnconfigure(0, weight=1)
         game_editor_window.columnconfigure(1, weight=1)
