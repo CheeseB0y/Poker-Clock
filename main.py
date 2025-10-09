@@ -19,45 +19,50 @@ class PokerClock:
         self.s_blind = tk.StringVar(value=f"Small Blind: {rounds[self.round_index].s_blind:,}")
         self.time_remaining = rounds[self.round_index].time * 60
         self.time_display = tk.StringVar(value=self.format_time_remaining())
-        
-        self.bg_color="#0B6623"
+
+        self.bg_color = "#0B6623"
         self.pause = True
+        self.timer_button_text = tk.StringVar(value="Start Timer")
 
         self.root.title("Poker Clock")
         self.root.geometry("1200x900")
         self.root.configure(bg=self.bg_color)
-
         
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
+        self.bg_color = "#0B6623"
+        
         option_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", menu=option_menu)
         option_menu.add_command(label="New Game", command=self.game_editor)
-        option_menu.add_command(label="Edit Game")
+        option_menu.add_command(label="Edit Game", command=self.game_editor)
+        option_menu.add_command(label="Restart Game", command=self.restart_game)
         option_menu.add_command(label="Exit", command=quit)
 
         self.root.columnconfigure((0, 1, 2), weight=1)
         self.root.rowconfigure((0, 1, 2, 3), weight=1)
         
-        round_frame = tk.Frame(self.root, pady=10, bg="black")
-        round_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
+        self.round_frame = tk.Frame(self.root, bg=self.bg_color)
+        self.round_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
 
-        button_frame = tk.Frame(self.root, bg=self.bg_color)
-        button_frame.grid(row=1, column=2, rowspan=2, sticky="NESW")
+        self.button_frame = tk.Frame(self.root, bg=self.bg_color)
+        self.button_frame.grid(row=1, column=2, rowspan=2, sticky="NESW")
 
-        time_frame = tk.Frame(self.root, bg=self.bg_color)
-        time_frame.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="NESW")
+        self.time_frame = tk.Frame(self.root, bg=self.bg_color)
+        self.time_frame.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="NESW")
 
-        blind_frame = tk.Frame(self.root, bg=self.bg_color)
-        blind_frame.grid(row=3, column=0, columnspan=2, sticky="NESW")
+        self.blind_frame = tk.Frame(self.root, bg=self.bg_color)
+        self.blind_frame.grid(row=3, column=0, columnspan=2, sticky="NESW")
 
-        round_number_label = tk.Label(round_frame, textvariable=self.round_num, bg="black", fg="white", font=("Arial", 60, "bold")).pack(fill="both", expand=True)
-        timer_label = tk.Label(time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold")).pack(fill="both", expand=True)
-        timer_button = tk.Button(button_frame, text="Start timer", command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
-        next_button = tk.Button(button_frame, text="Next round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
-        s_blind_label = tk.Label(blind_frame, textvariable=self.s_blind, bg="red", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
-        b_blind_label = tk.Label(blind_frame, textvariable=self.b_blind, bg="black", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
+        self.round_number_label = tk.Label(self.round_frame, textvariable=self.round_num, bg="black", fg="white", font=("Arial", 60, "bold"))
+        self.round_number_label.pack(fill="both", expand=True)
+        self.timer_label = tk.Label(self.time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold"))
+        self.timer_label.pack(fill="both", expand=True)
+        timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
+        next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
+        s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
+        b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
         
 
         self.root.mainloop()
@@ -65,9 +70,11 @@ class PokerClock:
     def start_timer(self):
         if self.pause:
             self.pause = False
+            self.timer_button_text.set("Pause Timer")
             self.countdown()
         else:
             self.pause_timer()
+            self.timer_button_text.set("Resume Timer")
 
     def pause_timer(self):
         self.pause = True
@@ -81,6 +88,7 @@ class PokerClock:
             pass
         else:
             self.time_display.set("0:00")
+            self.flash = True
             self.flash_screen()
 
     def format_time_remaining(self): 
@@ -92,21 +100,61 @@ class PokerClock:
 
     
     # This needs to be like this for some reason
-    # Fix later
     def flash_screen(self, duration=10, speed=500):
-        if duration > 0:
-            self.bg_color = "black"
+        if duration > 0 and self.flash:
+            self.root.configure(bg="black")
+            self.round_frame.configure(bg="black")
+            self.round_number_label.configure(bg="black")
+            self.button_frame.configure(bg="black")
+            self.time_frame.configure(bg="black")
+            self.timer_label.configure(bg="black")
+            self.blind_frame.configure(bg="black")
             self.root.after(speed, lambda: self.flash_screen_2(duration, speed))
         else:
-            self.bg_color = "#0B6623"
+            self.root.configure(bg=self.bg_color)
+            self.round_frame.configure(bg=self.bg_color)
+            self.round_number_label.configure(bg="black")
+            self.button_frame.configure(bg=self.bg_color)
+            self.time_frame.configure(bg=self.bg_color)
+            self.timer_label.configure(bg=self.bg_color)
+            self.blind_frame.configure(bg=self.bg_color)
     def flash_screen_2(self, duration, speed):
-            self.bg_color = "white"
+        if self.flash:
+            self.root.configure(bg="white")
+            self.round_frame.configure(bg="white")
+            self.round_number_label.configure(bg="white")
+            self.button_frame.configure(bg="white")
+            self.time_frame.configure(bg="white")
+            self.timer_label.configure(bg="white")
+            self.blind_frame.configure(bg="white")
             self.root.after(speed, lambda: self.flash_screen(duration - 1, speed))
+        else:
+            self.root.configure(bg=self.bg_color)
+            self.round_frame.configure(bg=self.bg_color)
+            self.round_number_label.configure(bg="black")
+            self.button_frame.configure(bg=self.bg_color)
+            self.time_frame.configure(bg=self.bg_color)
+            self.timer_label.configure(bg=self.bg_color)
+            self.blind_frame.configure(bg=self.bg_color)
 
     def next_round(self):
+        self.flash = False
+        self.pause = True
         self.round_index += 1
         self.time_remaining = rounds[self.round_index].time * 60
         self.time_display.set(value=self.format_time_remaining())
+        self.timer_button_text.set("Start Timer")
+        self.round_num.set(f"Round: {rounds[self.round_index].num}")
+        self.b_blind.set(f"Big Blind: {rounds[self.round_index].b_blind:,}")
+        self.s_blind.set(f"Small Blind: {rounds[self.round_index].s_blind:,}")
+    
+    def restart_game(self):
+        self.flash = False
+        self.pause = True
+        self.round_index = 0
+        self.time_remaining = rounds[self.round_index].time * 60
+        self.time_display.set(value=self.format_time_remaining())
+        self.timer_button_text.set("Start Timer")
         self.round_num.set(f"Round: {rounds[self.round_index].num}")
         self.b_blind.set(f"Big Blind: {rounds[self.round_index].b_blind:,}")
         self.s_blind.set(f"Small Blind: {rounds[self.round_index].s_blind:,}")
