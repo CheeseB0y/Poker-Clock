@@ -32,12 +32,12 @@ class PokerClock:
         self.root.geometry("1200x900")
         self.root.configure(bg=self.bg_color)
         
-        menubar = tk.Menu(self.root)
+        menubar = tk.Menu(self.root, bg="black", fg="white", relief="raised")
         self.root.config(menu=menubar)
 
         self.bg_color = "#0B6623"
         
-        option_menu = tk.Menu(menubar, tearoff=0)
+        option_menu = tk.Menu(menubar, tearoff=0, bg="black", fg="white")
         menubar.add_cascade(label="Options", menu=option_menu)
         option_menu.add_command(label="New Game", command=self.new_game)
         option_menu.add_command(label="Edit Game", command=self.game_editor)
