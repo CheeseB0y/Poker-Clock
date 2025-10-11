@@ -2,7 +2,7 @@ import tkinter as tk
 import math
 
 class Round:
-    def __init__(self, num, time, s_blind, b_blind):
+    def __init__(self, num, time=0, s_blind=0, b_blind=0):
         self.num = num
         self.time = time
         self.s_blind = s_blind
@@ -13,11 +13,12 @@ class PokerClock:
     def __init__(self, rounds):
         self.root = tk.Tk()
         self.rounds = rounds
+        self.num_rounds = len(rounds)
         self.round_index = 0
-        self.round_num = tk.StringVar(value=f"Round: {rounds[self.round_index].num}")
-        self.b_blind = tk.StringVar(value=f"Big Blind: {rounds[self.round_index].b_blind:,}")
-        self.s_blind = tk.StringVar(value=f"Small Blind: {rounds[self.round_index].s_blind:,}")
-        self.time_remaining = rounds[self.round_index].time * 60
+        self.round_num = tk.StringVar(value=f"Round: {self.rounds[self.round_index].num}")
+        self.b_blind = tk.StringVar(value=f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
+        self.s_blind = tk.StringVar(value=f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
+        self.time_remaining = self.rounds[self.round_index].time * 60
         self.time_display = tk.StringVar(value=self.format_time_remaining())
 
         self.bg_color = "#0B6623"
@@ -35,8 +36,9 @@ class PokerClock:
         
         option_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", menu=option_menu)
-        option_menu.add_command(label="New Game", command=self.game_editor)
+        option_menu.add_command(label="New Game", command=self.new_game)
         option_menu.add_command(label="Edit Game", command=self.game_editor)
+        option_menu.add_command(label="Game Overview", command=self.game_overview)
         option_menu.add_command(label="Restart Game", command=self.restart_game)
         option_menu.add_command(label="Exit", command=quit)
 
@@ -59,10 +61,14 @@ class PokerClock:
         self.round_number_label.pack(fill="both", expand=True)
         self.timer_label = tk.Label(self.time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold"))
         self.timer_label.pack(fill="both", expand=True)
-        timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
-        next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold")).pack(fill="both", expand=True, pady=100, padx=10)
-        s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
-        b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="ridge", font=("Arial", 30, "bold")).pack(side="left", fill="both", expand=True, pady=10, padx=50)
+        timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold"))
+        timer_button.pack(fill="both", expand=True, pady=100, padx=10)
+        next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold"))
+        next_button.pack(fill="both", expand=True, pady=100, padx=10)
+        s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="ridge", font=("Arial", 30, "bold"))
+        s_blind_label.pack(side="left", fill="both", expand=True, pady=10, padx=50)
+        b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="ridge", font=("Arial", 30, "bold"))
+        b_blind_label.pack(side="right", fill="both", expand=True, pady=10, padx=50)
         
 
         self.root.mainloop()
@@ -141,23 +147,72 @@ class PokerClock:
         self.flash = False
         self.pause = True
         self.round_index += 1
-        self.time_remaining = rounds[self.round_index].time * 60
+        try:
+            self.time_remaining = self.rounds[self.round_index].time * 60
+        except IndexError:
+            self.round_index -= 1
+            self.time_remaining = self.rounds[self.round_index].time * 60
         self.time_display.set(value=self.format_time_remaining())
         self.timer_button_text.set("Start Timer")
-        self.round_num.set(f"Round: {rounds[self.round_index].num}")
-        self.b_blind.set(f"Big Blind: {rounds[self.round_index].b_blind:,}")
-        self.s_blind.set(f"Small Blind: {rounds[self.round_index].s_blind:,}")
+        self.round_num.set(f"Round: {self.rounds[self.round_index].num}")
+        self.b_blind.set(f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
+        self.s_blind.set(f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
     
     def restart_game(self):
         self.flash = False
         self.pause = True
         self.round_index = 0
-        self.time_remaining = rounds[self.round_index].time * 60
+        self.time_remaining = self.rounds[self.round_index].time * 60
         self.time_display.set(value=self.format_time_remaining())
         self.timer_button_text.set("Start Timer")
-        self.round_num.set(f"Round: {rounds[self.round_index].num}")
-        self.b_blind.set(f"Big Blind: {rounds[self.round_index].b_blind:,}")
-        self.s_blind.set(f"Small Blind: {rounds[self.round_index].s_blind:,}")
+        self.round_num.set(f"Round: {self.rounds[self.round_index].num}")
+        self.b_blind.set(f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
+        self.s_blind.set(f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
+
+    def new_game(self):
+        new_game_window = tk.Toplevel(self.root)
+        new_game_window.title("Game Editor")
+        new_game_window.geometry("800x600")
+        new_game_window.configure(bg=self.bg_color)
+
+        new_game_window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
+
+        round_column_heading = tk.Frame(new_game_window, bg="red")
+        round_column_heading.grid(row=0, column=1, sticky="NESW")
+        self.round_column = tk.Frame(new_game_window, bg="red")
+        self.round_column.grid(row=1, column=1, sticky='NESW')
+        time_column_heading = tk.Frame(new_game_window, bg="black")
+        time_column_heading.grid(row=0, column=2, sticky='NESW')
+        self.time_column = tk.Frame(new_game_window, bg="black")
+        self.time_column.grid(row=1, column=2, sticky='NESW')
+        s_blind_column_heading = tk.Frame(new_game_window, bg="red")
+        s_blind_column_heading.grid(row=0, column=3, sticky='NESW')
+        self.s_blind_column = tk.Frame(new_game_window, bg="red")
+        self.s_blind_column.grid(row=1, column=3, sticky='NESW')
+        b_blind_column_heading = tk.Frame(new_game_window, bg="black")
+        b_blind_column_heading.grid(row=0, column=4, sticky='NESW')
+        self.b_blind_column = tk.Frame(new_game_window, bg="black")
+        self.b_blind_column.grid(row=1, column=4, sticky='NESW')
+
+        round_column_label = tk.Label(round_column_heading, text="Rounds:", bg="red", fg="white")
+        round_column_label.pack(fill="both", expand=True, side="left")
+        self.num_rounds_entry = tk.Entry(round_column_heading, width=2, bg="red", fg="white")
+        self.num_rounds_entry.pack(fill="both", expand=True, side="right")
+        self.num_rounds_entry.insert(tk.END, "0")
+        time_column_label = tk.Label(time_column_heading, text="Time", bg="black", fg="white")
+        time_column_label.pack(fill="both", expand=True)
+        s_blind_column_label = tk.Label(s_blind_column_heading, text="Small Blind", bg="red", fg="white")
+        s_blind_column_label.pack(fill="both", expand=True)
+        b_blind_column_label = tk.Label(b_blind_column_heading, text="Big Blind", bg="black", fg="white")
+        b_blind_column_label.pack(fill="both", expand=True)
+
+        self.time_list = []
+        self.s_blind_list = []
+        self.b_blind_list = []
+
+        button_frame = tk.Frame(new_game_window, bg=self.bg_color)
+        button_frame.grid(row=self.num_rounds+2, column=1, columnspan=4, sticky="NESW")
+        tk.Button(button_frame, text="Save Game", command=self.save_game).pack(fill="both")
 
     def game_editor(self):
         game_editor_window = tk.Toplevel(self.root)
@@ -165,32 +220,125 @@ class PokerClock:
         game_editor_window.geometry("800x600")
         game_editor_window.configure(bg=self.bg_color)
 
-        game_editor_window.columnconfigure(0, weight=1)
-        game_editor_window.columnconfigure(1, weight=1)
-        game_editor_window.columnconfigure(2, weight=1)
-        game_editor_window.columnconfigure(3, weight=1)
-        game_editor_window.columnconfigure(4, weight=1)
-        game_editor_window.columnconfigure(5, weight=1)
+        game_editor_window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
 
-        round_column = tk.Frame(game_editor_window, bg="red")
-        round_column.grid(row=0, column=1, sticky='NSWE')
-        time_column = tk.Frame(game_editor_window, bg="black")
-        time_column.grid(row=0, column=2, sticky='NSWE')
-        b_blind_column = tk.Frame(game_editor_window, bg="red")
-        b_blind_column.grid(row=0, column=3, sticky='NSWE')
-        s_blind_column = tk.Frame(game_editor_window, bg="black")
-        s_blind_column.grid(row=0, column=4, sticky='NSWE')
+        round_column_heading = tk.Frame(game_editor_window, bg="red")
+        round_column_heading.grid(row=0, column=1, sticky="NESW")
+        self.round_column = tk.Frame(game_editor_window, bg="red")
+        self.round_column.grid(row=1, column=1, sticky='NESW')
+        time_column_heading = tk.Frame(game_editor_window, bg="black")
+        time_column_heading.grid(row=0, column=2, sticky='NESW')
+        self.time_column = tk.Frame(game_editor_window, bg="black")
+        self.time_column.grid(row=1, column=2, sticky='NESW')
+        s_blind_column_heading = tk.Frame(game_editor_window, bg="red")
+        s_blind_column_heading.grid(row=0, column=3, sticky='NESW')
+        self.s_blind_column = tk.Frame(game_editor_window, bg="red")
+        self.s_blind_column.grid(row=1, column=3, sticky='NESW')
+        b_blind_column_heading = tk.Frame(game_editor_window, bg="black")
+        b_blind_column_heading.grid(row=0, column=4, sticky='NESW')
+        self.b_blind_column = tk.Frame(game_editor_window, bg="black")
+        self.b_blind_column.grid(row=1, column=4, sticky='NESW')
 
-        round_column_label = tk.Label(round_column, text="Round", bg="red", fg="white").grid(row=0, column=1, sticky='NESW')
-        time_column_label = tk.Label(time_column, text="Time", bg="black", fg="white").grid(row=0, column=2, sticky='NESW')
-        b_blind_column_label = tk.Label(b_blind_column, text="Big Blind", bg="red", fg="white").grid(row=0, column=3, sticky='NESW')
-        s_blind_column_label = tk.Label(s_blind_column, text="Small Blind", bg="black", fg="white").grid(row=0, column=4, sticky='NESW')
+        round_column_label = tk.Label(round_column_heading, text="Rounds:", bg="red", fg="white")
+        round_column_label.pack(fill="both", expand=True, side="left")
+        self.num_rounds_entry = tk.Entry(round_column_heading, width=2, bg="red", fg="white")
+        self.num_rounds_entry.pack(fill="both", expand=True, side="right")
+        self.num_rounds_entry.insert(tk.END, self.num_rounds)
+        time_column_label = tk.Label(time_column_heading, text="Time", bg="black", fg="white")
+        time_column_label.pack(fill="both", expand=True)
+        s_blind_column_label = tk.Label(s_blind_column_heading, text="Small Blind", bg="red", fg="white")
+        s_blind_column_label.pack(fill="both", expand=True)
+        b_blind_column_label = tk.Label(b_blind_column_heading, text="Big Blind", bg="black", fg="white")
+        b_blind_column_label.pack(fill="both", expand=True)
+
+        self.time_list = []
+        self.s_blind_list = []
+        self.b_blind_list = []
 
         for (index, round) in enumerate(self.rounds):
-            tk.Label(round_column, text=round.num, bg="red", fg="white").grid(row=index+1, column=1, sticky='NESW')
-            tk.Label(time_column, text=round.time, bg="black", fg="white").grid(row=index+1, column=2, sticky='NESW')
-            tk.Label(b_blind_column, text=round.b_blind, bg="red", fg="white").grid(row=index+1, column=3, sticky='NESW')
-            tk.Label(s_blind_column, text=round.s_blind, bg="black", fg="white").grid(row=index+1, column=4, sticky='NESW')
+            tk.Label(self.round_column, text=round.num, bg="red", fg="white").pack(fill="both", expand=True)
+            self.time_list.append(tk.Entry(self.time_column, width=6, bg="black", fg="white"))
+            self.time_list[index].pack(fill="both", expand=True)
+            self.time_list[index].insert(tk.END, round.time)
+            self.s_blind_list.append(tk.Entry(self.s_blind_column, width=10, bg="red", fg="white"))
+            self.s_blind_list[index].pack(fill="both", expand=True)
+            self.s_blind_list[index].insert(tk.END, round.s_blind)
+            self.b_blind_list.append(tk.Entry(self.b_blind_column, width=10, bg="black", fg="white"))
+            self.b_blind_list[index].pack(fill="both", expand=True)  
+            self.b_blind_list[index].insert(tk.END, round.b_blind)
+
+        button_frame = tk.Frame(game_editor_window, bg=self.bg_color)
+        button_frame.grid(row=self.num_rounds+2, column=1, columnspan=4, sticky="NESW")
+        tk.Button(button_frame, text="Save Game", command=self.save_game).pack(fill="both")
+
+    def save_game(self):
+        try:
+            self.num_rounds = int(self.num_rounds_entry.get())
+        except ValueError:
+            self.num_rounds_entry.delete(0, tk.END)
+            self.num_rounds_entry.insert(tk.END, self.num_rounds)
+        rounds = []
+        for i in range(self.num_rounds):
+            try:
+                rounds.append(Round(i+1, int(self.time_list[i].get()), int(self.s_blind_list[i].get()), int(self.b_blind_list[i].get())))
+            except IndexError:
+                rounds.append(Round(i+1))
+            except ValueError:
+                rounds.append(Round(i+1))
+        self.rounds = rounds
+        self.refresh_editor()
+
+    def refresh_editor(self):
+        for widget in self.round_column.winfo_children():
+            widget.destroy()
+        for widget in self.time_column.winfo_children():
+            widget.destroy()
+        self.s_blind_list.clear()
+        for widget in self.s_blind_column.winfo_children():
+            widget.destroy()
+        self.b_blind_list.clear()
+        for widget in self.b_blind_column.winfo_children():
+            widget.destroy()
+        self.time_list.clear()
+        for (index, round) in enumerate(self.rounds):
+            tk.Label(self.round_column, text=round.num, bg="red", fg="white").pack(fill="both", expand=True)
+            self.time_list.append(tk.Entry(self.time_column, width=6, bg="black", fg="white"))
+            self.time_list[index].pack(fill="both", expand=True)
+            self.time_list[index].insert(tk.END, round.time)
+            self.s_blind_list.append(tk.Entry(self.s_blind_column, width=10, bg="red", fg="white"))
+            self.s_blind_list[index].pack(fill="both", expand=True)
+            self.s_blind_list[index].insert(tk.END, round.s_blind)
+            self.b_blind_list.append(tk.Entry(self.b_blind_column, width=10, bg="black", fg="white"))
+            self.b_blind_list[index].pack(fill="both", expand=True)  
+            self.b_blind_list[index].insert(tk.END, round.b_blind)
+
+    def game_overview(self):
+        game_overview_window = tk.Toplevel(self.root)
+        game_overview_window.title("Game Editor")
+        game_overview_window.geometry("800x600")
+        game_overview_window.configure(bg=self.bg_color)
+
+        game_overview_window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
+
+        round_column = tk.Frame(game_overview_window, bg="red")
+        round_column.grid(row=0, column=1, sticky='NESW')
+        time_column = tk.Frame(game_overview_window, bg="black")
+        time_column.grid(row=0, column=2, sticky='NESW')
+        s_blind_column = tk.Frame(game_overview_window, bg="red")
+        s_blind_column.grid(row=0, column=3, sticky='NESW')
+        b_blind_column = tk.Frame(game_overview_window, bg="black")
+        b_blind_column.grid(row=0, column=4, sticky='NESW')
+
+        tk.Label(round_column, text="Round", bg="red", fg="white").pack(fill="both", expand=True)
+        tk.Label(time_column, text="Time", bg="black", fg="white").pack(fill="both", expand=True)
+        tk.Label(s_blind_column, text="Small Blind", bg="red", fg="white").pack(fill="both", expand=True)
+        tk.Label(b_blind_column, text="Big Blind", bg="black", fg="white").pack(fill="both", expand=True)
+
+        for (index, round) in enumerate(self.rounds):
+            tk.Label(round_column, text=round.num, bg="red", fg="white").pack(fill="both", expand=True)
+            tk.Label(time_column, text=round.time, bg="black", fg="white").pack(fill="both", expand=True)
+            tk.Label(s_blind_column, text=round.s_blind, bg="red", fg="white").pack(fill="both", expand=True)
+            tk.Label(b_blind_column, text=round.b_blind, bg="black", fg="white").pack(fill="both", expand=True)
 
 if __name__ == '__main__':
     # Fix hard coded values later
