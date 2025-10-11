@@ -1,5 +1,8 @@
 import tkinter as tk
 import math
+import csv
+from tkinter import filedialog
+from pathlib import Path
 
 class Round:
     def __init__(self, num, time=0, s_blind=0, b_blind=0):
@@ -61,13 +64,13 @@ class PokerClock:
         self.round_number_label.pack(fill="both", expand=True)
         self.timer_label = tk.Label(self.time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold"))
         self.timer_label.pack(fill="both", expand=True)
-        timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold"))
+        timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold"), relief="raised")
         timer_button.pack(fill="both", expand=True, pady=100, padx=10)
-        next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold"))
+        next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold"), relief="raised")
         next_button.pack(fill="both", expand=True, pady=100, padx=10)
-        s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="ridge", font=("Arial", 30, "bold"))
+        s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="raised", font=("Arial", 30, "bold"))
         s_blind_label.pack(side="left", fill="both", expand=True, pady=10, padx=50)
-        b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="ridge", font=("Arial", 30, "bold"))
+        b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="raised", font=("Arial", 30, "bold"))
         b_blind_label.pack(side="right", fill="both", expand=True, pady=10, padx=50)
         
 
@@ -169,36 +172,34 @@ class PokerClock:
         self.b_blind.set(f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
         self.s_blind.set(f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
 
-    def new_game(self):
-        new_game_window = tk.Toplevel(self.root)
-        new_game_window.title("Game Editor")
-        new_game_window.geometry("800x600")
-        new_game_window.configure(bg=self.bg_color)
+    def build_editor(self, window, rounds):
+        window.geometry("800x600")
+        window.configure(bg=self.bg_color)
 
-        new_game_window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
+        window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
 
-        round_column_heading = tk.Frame(new_game_window, bg="red")
+        round_column_heading = tk.Frame(window, bg="red")
         round_column_heading.grid(row=0, column=1, sticky="NESW")
-        self.round_column = tk.Frame(new_game_window, bg="red")
+        self.round_column = tk.Frame(window, bg="red")
         self.round_column.grid(row=1, column=1, sticky='NESW')
-        time_column_heading = tk.Frame(new_game_window, bg="black")
+        time_column_heading = tk.Frame(window, bg="black")
         time_column_heading.grid(row=0, column=2, sticky='NESW')
-        self.time_column = tk.Frame(new_game_window, bg="black")
+        self.time_column = tk.Frame(window, bg="black")
         self.time_column.grid(row=1, column=2, sticky='NESW')
-        s_blind_column_heading = tk.Frame(new_game_window, bg="red")
+        s_blind_column_heading = tk.Frame(window, bg="red")
         s_blind_column_heading.grid(row=0, column=3, sticky='NESW')
-        self.s_blind_column = tk.Frame(new_game_window, bg="red")
+        self.s_blind_column = tk.Frame(window, bg="red")
         self.s_blind_column.grid(row=1, column=3, sticky='NESW')
-        b_blind_column_heading = tk.Frame(new_game_window, bg="black")
+        b_blind_column_heading = tk.Frame(window, bg="black")
         b_blind_column_heading.grid(row=0, column=4, sticky='NESW')
-        self.b_blind_column = tk.Frame(new_game_window, bg="black")
+        self.b_blind_column = tk.Frame(window, bg="black")
         self.b_blind_column.grid(row=1, column=4, sticky='NESW')
 
         round_column_label = tk.Label(round_column_heading, text="Rounds:", bg="red", fg="white")
         round_column_label.pack(fill="both", expand=True, side="left")
         self.num_rounds_entry = tk.Entry(round_column_heading, width=2, bg="red", fg="white")
         self.num_rounds_entry.pack(fill="both", expand=True, side="right")
-        self.num_rounds_entry.insert(tk.END, "0")
+        self.num_rounds_entry.insert(tk.END, len(rounds))
         time_column_label = tk.Label(time_column_heading, text="Time", bg="black", fg="white")
         time_column_label.pack(fill="both", expand=True)
         s_blind_column_label = tk.Label(s_blind_column_heading, text="Small Blind", bg="red", fg="white")
@@ -210,52 +211,7 @@ class PokerClock:
         self.s_blind_list = []
         self.b_blind_list = []
 
-        button_frame = tk.Frame(new_game_window, bg=self.bg_color)
-        button_frame.grid(row=self.num_rounds+2, column=1, columnspan=4, sticky="NESW")
-        tk.Button(button_frame, text="Save Game", command=self.save_game).pack(fill="both")
-
-    def game_editor(self):
-        game_editor_window = tk.Toplevel(self.root)
-        game_editor_window.title("Game Editor")
-        game_editor_window.geometry("800x600")
-        game_editor_window.configure(bg=self.bg_color)
-
-        game_editor_window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
-
-        round_column_heading = tk.Frame(game_editor_window, bg="red")
-        round_column_heading.grid(row=0, column=1, sticky="NESW")
-        self.round_column = tk.Frame(game_editor_window, bg="red")
-        self.round_column.grid(row=1, column=1, sticky='NESW')
-        time_column_heading = tk.Frame(game_editor_window, bg="black")
-        time_column_heading.grid(row=0, column=2, sticky='NESW')
-        self.time_column = tk.Frame(game_editor_window, bg="black")
-        self.time_column.grid(row=1, column=2, sticky='NESW')
-        s_blind_column_heading = tk.Frame(game_editor_window, bg="red")
-        s_blind_column_heading.grid(row=0, column=3, sticky='NESW')
-        self.s_blind_column = tk.Frame(game_editor_window, bg="red")
-        self.s_blind_column.grid(row=1, column=3, sticky='NESW')
-        b_blind_column_heading = tk.Frame(game_editor_window, bg="black")
-        b_blind_column_heading.grid(row=0, column=4, sticky='NESW')
-        self.b_blind_column = tk.Frame(game_editor_window, bg="black")
-        self.b_blind_column.grid(row=1, column=4, sticky='NESW')
-
-        round_column_label = tk.Label(round_column_heading, text="Rounds:", bg="red", fg="white")
-        round_column_label.pack(fill="both", expand=True, side="left")
-        self.num_rounds_entry = tk.Entry(round_column_heading, width=2, bg="red", fg="white")
-        self.num_rounds_entry.pack(fill="both", expand=True, side="right")
-        self.num_rounds_entry.insert(tk.END, self.num_rounds)
-        time_column_label = tk.Label(time_column_heading, text="Time", bg="black", fg="white")
-        time_column_label.pack(fill="both", expand=True)
-        s_blind_column_label = tk.Label(s_blind_column_heading, text="Small Blind", bg="red", fg="white")
-        s_blind_column_label.pack(fill="both", expand=True)
-        b_blind_column_label = tk.Label(b_blind_column_heading, text="Big Blind", bg="black", fg="white")
-        b_blind_column_label.pack(fill="both", expand=True)
-
-        self.time_list = []
-        self.s_blind_list = []
-        self.b_blind_list = []
-
-        for (index, round) in enumerate(self.rounds):
+        for (index, round) in enumerate(rounds):
             tk.Label(self.round_column, text=round.num, bg="red", fg="white").pack(fill="both", expand=True)
             self.time_list.append(tk.Entry(self.time_column, width=6, bg="black", fg="white"))
             self.time_list[index].pack(fill="both", expand=True)
@@ -267,9 +223,21 @@ class PokerClock:
             self.b_blind_list[index].pack(fill="both", expand=True)  
             self.b_blind_list[index].insert(tk.END, round.b_blind)
 
-        button_frame = tk.Frame(game_editor_window, bg=self.bg_color)
+        button_frame = tk.Frame(window, bg=self.bg_color)
         button_frame.grid(row=self.num_rounds+2, column=1, columnspan=4, sticky="NESW")
-        tk.Button(button_frame, text="Save Game", command=self.save_game).pack(fill="both")
+        tk.Button(button_frame, text="Save Game", command=self.save_game, bg="black", fg="white").pack(side="left", fill="both", expand=True)
+        tk.Button(button_frame, text="Export Game", command=self.export_game, bg="red", fg="white").pack(side="left", fill="both", expand=True)
+        tk.Button(button_frame, text="Import Game", command=self.import_game, bg="black", fg="white").pack(side="left", fill="both", expand=True)
+
+    def new_game(self):
+        new_game_window = tk.Toplevel(self.root)
+        new_game_window.title("Game Editor")
+        self.build_editor(new_game_window, [])
+
+    def game_editor(self):
+        game_editor_window = tk.Toplevel(self.root)
+        game_editor_window.title("Game Editor")
+        self.build_editor(game_editor_window, self.rounds)
 
     def save_game(self):
         try:
@@ -312,33 +280,75 @@ class PokerClock:
             self.b_blind_list[index].pack(fill="both", expand=True)  
             self.b_blind_list[index].insert(tk.END, round.b_blind)
 
+    def export_game(self):
+        documents_dir = Path.home() / "Documents"
+        poker_dir = documents_dir / "PokerClock"
+        poker_dir.mkdir(parents=True, exist_ok=True)
+
+        self.save_game()
+
+        file = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            initialdir=poker_dir,
+            title="Choose where to save the game file.",
+            filetypes=(("CVS files", "*.csv"),("All files","*.*"))
+        )
+        
+        if file:
+            with open(file, "w", newline="") as f:
+                for round in self.rounds:
+                    f.write(f"{round.num},{round.time},{round.s_blind},{round.b_blind}\n")
+
+    def import_game(self):
+        documents_dir = Path.home() / "Documents"
+        poker_dir = documents_dir / "PokerClock"
+        poker_dir.mkdir(parents=True, exist_ok=True)
+
+        file = filedialog.askopenfilename(
+            initialdir=poker_dir,
+            title="Select a file",
+            filetypes=(("CVS files", "*.csv"),("All files","*.*"))
+        )
+
+        rounds = []
+
+        if file:
+            with open(file, "r") as f:
+                for row in csv.reader(f):
+                    rounds.append(Round(int(row[0]), int(row[1]), int(row[2]), int(row[3])))
+        
+        self.rounds = rounds
+        self.refresh_editor()
+
     def game_overview(self):
         game_overview_window = tk.Toplevel(self.root)
         game_overview_window.title("Game Editor")
         game_overview_window.geometry("800x600")
         game_overview_window.configure(bg=self.bg_color)
 
-        game_overview_window.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
+        game_overview_window.columnconfigure((0, 1, 2, 3), weight=1)
+        for i in range(len(self.rounds)):
+            game_overview_window.rowconfigure(i, weight=1)
 
         round_column = tk.Frame(game_overview_window, bg="red")
-        round_column.grid(row=0, column=1, sticky='NESW')
+        round_column.grid(row=0, column=0, rowspan=len(self.rounds), sticky='NESW')
         time_column = tk.Frame(game_overview_window, bg="black")
-        time_column.grid(row=0, column=2, sticky='NESW')
+        time_column.grid(row=0, column=1, rowspan=len(self.rounds), sticky='NESW')
         s_blind_column = tk.Frame(game_overview_window, bg="red")
-        s_blind_column.grid(row=0, column=3, sticky='NESW')
+        s_blind_column.grid(row=0, column=2, rowspan=len(self.rounds), sticky='NESW')
         b_blind_column = tk.Frame(game_overview_window, bg="black")
-        b_blind_column.grid(row=0, column=4, sticky='NESW')
+        b_blind_column.grid(row=0, column=3, rowspan=len(self.rounds), sticky='NESW')
 
-        tk.Label(round_column, text="Round", bg="red", fg="white").pack(fill="both", expand=True)
-        tk.Label(time_column, text="Time", bg="black", fg="white").pack(fill="both", expand=True)
-        tk.Label(s_blind_column, text="Small Blind", bg="red", fg="white").pack(fill="both", expand=True)
-        tk.Label(b_blind_column, text="Big Blind", bg="black", fg="white").pack(fill="both", expand=True)
+        tk.Label(round_column, text="Round", bg="red", fg="white").grid(row=0, column=0, padx=10, pady=10, sticky='NSWE')
+        tk.Label(time_column, text="Time", bg="black", fg="white").grid(row=0, column=1, padx=10, pady=10, sticky='NSWE')
+        tk.Label(s_blind_column, text="Small Blind", bg="red", fg="white").grid(row=0, column=2, padx=10, pady=10, sticky='NSWE')
+        tk.Label(b_blind_column, text="Big Blind", bg="black", fg="white").grid(row=0, column=3, padx=10, pady=10, sticky='NSWE')
 
         for (index, round) in enumerate(self.rounds):
-            tk.Label(round_column, text=round.num, bg="red", fg="white").pack(fill="both", expand=True)
-            tk.Label(time_column, text=round.time, bg="black", fg="white").pack(fill="both", expand=True)
-            tk.Label(s_blind_column, text=round.s_blind, bg="red", fg="white").pack(fill="both", expand=True)
-            tk.Label(b_blind_column, text=round.b_blind, bg="black", fg="white").pack(fill="both", expand=True)
+            tk.Label(round_column, text=round.num, bg="red", fg="white").grid(row=index+1, column=0, padx=10, pady=10, sticky='NSWE')
+            tk.Label(time_column, text=round.time, bg="black", fg="white").grid(row=index+1, column=1, padx=10, pady=10, sticky='NSWE')
+            tk.Label(s_blind_column, text=round.s_blind, bg="red", fg="white").grid(row=index+1, column=2, padx=10, pady=10, sticky='NSWE')
+            tk.Label(b_blind_column, text=round.b_blind, bg="black", fg="white").grid(row=index+1, column=3, padx=10, pady=10, sticky='NSWE')
 
 if __name__ == '__main__':
     # Fix hard coded values later
