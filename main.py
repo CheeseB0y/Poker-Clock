@@ -15,22 +15,24 @@ class PokerClock:
 
     def __init__(self, rounds):
         self.root = tk.Tk()
+        self.bg_color = "#0B6623"
+        self.root.title("Poker Clock")
+        self.root.geometry("1200x900")
+        self.root.configure(bg=self.bg_color)
         self.rounds = rounds
-        self.num_rounds = len(rounds)
+        self.game_page()
+        self.root.mainloop()
+
+    def game_page(self):
         self.round_index = 0
         self.round_num = tk.StringVar(value=f"Round: {self.rounds[self.round_index].num}")
         self.b_blind = tk.StringVar(value=f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
         self.s_blind = tk.StringVar(value=f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
         self.time_remaining = self.rounds[self.round_index].time * 60
         self.time_display = tk.StringVar(value=self.format_time_remaining())
-
-        self.bg_color = "#0B6623"
+        
         self.pause = True
         self.timer_button_text = tk.StringVar(value="Start Timer")
-
-        self.root.title("Poker Clock")
-        self.root.geometry("1200x900")
-        self.root.configure(bg=self.bg_color)
         
         menubar = tk.Menu(self.root, bg="black", fg="white", relief="raised")
         self.root.config(menu=menubar)
@@ -43,6 +45,7 @@ class PokerClock:
         option_menu.add_command(label="Edit Game", command=self.game_editor)
         option_menu.add_command(label="Game Overview", command=self.game_overview)
         option_menu.add_command(label="Restart Game", command=self.restart_game)
+        # option_menu.add_command(label="Landing Page", command=self.landing_page)
         option_menu.add_command(label="Exit", command=quit)
 
         self.root.columnconfigure((0, 1, 2), weight=1)
@@ -50,13 +53,10 @@ class PokerClock:
         
         self.round_frame = tk.Frame(self.root, bg=self.bg_color)
         self.round_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
-
         self.button_frame = tk.Frame(self.root, bg=self.bg_color)
         self.button_frame.grid(row=1, column=2, rowspan=2, sticky="NESW")
-
         self.time_frame = tk.Frame(self.root, bg=self.bg_color)
         self.time_frame.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="NESW")
-
         self.blind_frame = tk.Frame(self.root, bg=self.bg_color)
         self.blind_frame.grid(row=3, column=0, columnspan=2, sticky="NESW")
 
@@ -72,9 +72,9 @@ class PokerClock:
         s_blind_label.pack(side="left", fill="both", expand=True, pady=10, padx=50)
         b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="raised", font=("Arial", 30, "bold"))
         b_blind_label.pack(side="right", fill="both", expand=True, pady=10, padx=50)
-        
 
-        self.root.mainloop()
+    # def landing_page(self):
+
 
     def start_timer(self):
         if self.pause:
@@ -224,7 +224,7 @@ class PokerClock:
             self.b_blind_list[index].insert(tk.END, round.b_blind)
 
         button_frame = tk.Frame(window, bg=self.bg_color)
-        button_frame.grid(row=self.num_rounds+2, column=1, columnspan=4, sticky="NESW")
+        button_frame.grid(row=2, column=1, columnspan=4, sticky="NESW")
         tk.Button(button_frame, text="Save Game", command=self.save_game, bg="black", fg="white").pack(side="left", fill="both", expand=True)
         tk.Button(button_frame, text="Export Game", command=self.export_game, bg="red", fg="white").pack(side="left", fill="both", expand=True)
         tk.Button(button_frame, text="Import Game", command=self.import_game, bg="black", fg="white").pack(side="left", fill="both", expand=True)
@@ -241,12 +241,13 @@ class PokerClock:
 
     def save_game(self):
         try:
-            self.num_rounds = int(self.num_rounds_entry.get())
+            num_rounds = int(self.num_rounds_entry.get())
         except ValueError:
             self.num_rounds_entry.delete(0, tk.END)
-            self.num_rounds_entry.insert(tk.END, self.num_rounds)
+            self.num_rounds_entry.insert(tk.END, len(self.rounds))
+            num_rounds =  len(self.rounds)
         rounds = []
-        for i in range(self.num_rounds):
+        for i in range(num_rounds):
             try:
                 rounds.append(Round(i+1, int(self.time_list[i].get()), int(self.s_blind_list[i].get()), int(self.b_blind_list[i].get())))
             except IndexError:
@@ -322,7 +323,7 @@ class PokerClock:
 
     def game_overview(self):
         game_overview_window = tk.Toplevel(self.root)
-        game_overview_window.title("Game Editor")
+        game_overview_window.title("Game Overview")
         game_overview_window.geometry("800x600")
         game_overview_window.configure(bg=self.bg_color)
 
