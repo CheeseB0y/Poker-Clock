@@ -2,6 +2,7 @@ import tkinter as tk
 import math
 import csv
 from tkinter import filedialog
+from PIL import Image, ImageTk
 from pathlib import Path
 
 class Round:
@@ -13,68 +14,94 @@ class Round:
 
 class PokerClock:
 
-    def __init__(self, rounds):
+    def __init__(self):
         self.root = tk.Tk()
         self.bg_color = "#0B6623"
         self.root.title("Poker Clock")
         self.root.geometry("1200x900")
         self.root.configure(bg=self.bg_color)
-        self.rounds = rounds
-        self.game_page()
+        self.rounds = None
+        self.landing_page()
         self.root.mainloop()
 
     def game_page(self):
-        self.round_index = 0
-        self.round_num = tk.StringVar(value=f"Round: {self.rounds[self.round_index].num}")
-        self.b_blind = tk.StringVar(value=f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
-        self.s_blind = tk.StringVar(value=f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
-        self.time_remaining = self.rounds[self.round_index].time * 60
-        self.time_display = tk.StringVar(value=self.format_time_remaining())
-        
-        self.pause = True
-        self.timer_button_text = tk.StringVar(value="Start Timer")
-        
+        if self.rounds is not None:
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            self.landing_page = False
+
+        if self.landing_page == False:
+            self.round_index = 0
+            self.time_remaining = self.rounds[self.round_index].time * 60
+            self.pause = True
+
+            self.round_num = tk.StringVar(value=f"Round: {self.rounds[self.round_index].num}")
+            self.b_blind = tk.StringVar(value=f"Big Blind: {self.rounds[self.round_index].b_blind:,}")
+            self.s_blind = tk.StringVar(value=f"Small Blind: {self.rounds[self.round_index].s_blind:,}")
+            self.time_display = tk.StringVar(value=self.format_time_remaining())
+            self.timer_button_text = tk.StringVar(value="Start Timer")
+
+            self.menu_bar()
+            self.root.columnconfigure((0, 1, 2), weight=1)
+            self.root.rowconfigure((0, 1, 2, 3), weight=1)
+            
+            self.round_frame = tk.Frame(self.root, bg=self.bg_color)
+            self.round_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
+            self.button_frame = tk.Frame(self.root, bg=self.bg_color)
+            self.button_frame.grid(row=1, column=2, rowspan=2, sticky="NESW")
+            self.time_frame = tk.Frame(self.root, bg=self.bg_color)
+            self.time_frame.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="NESW")
+            self.blind_frame = tk.Frame(self.root, bg=self.bg_color)
+            self.blind_frame.grid(row=3, column=0, columnspan=2, sticky="NESW")
+
+            self.round_number_label = tk.Label(self.round_frame, textvariable=self.round_num, bg="black", fg="white", font=("Arial", 60, "bold"))
+            self.round_number_label.pack(fill="both", expand=True)
+            self.timer_label = tk.Label(self.time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold"))
+            self.timer_label.pack(fill="both", expand=True)
+            timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold"), relief="raised")
+            timer_button.pack(fill="both", expand=True, pady=100, padx=10)
+            next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold"), relief="raised")
+            next_button.pack(fill="both", expand=True, pady=100, padx=10)
+            s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="raised", font=("Arial", 30, "bold"))
+            s_blind_label.pack(side="left", fill="both", expand=True, pady=10, padx=50)
+            b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="raised", font=("Arial", 30, "bold"))
+            b_blind_label.pack(side="right", fill="both", expand=True, pady=10, padx=50)
+
+    def landing_page(self):
+        self.landing_page = True
+
+        self.root.columnconfigure((0, 1, 2), weight=1)
+        self.root.rowconfigure((0, 1), weight=1)
+
+        title_frame = tk.Frame(self.root, bg="black")
+        title_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
+        body_frame = tk.Frame(self.root, bg=self.bg_color)
+        body_frame.grid(row=1, column=0, columnspan=2, rowspan=3, sticky="NESW")
+        button_frame = tk.Frame(self.root, bg=self.bg_color)
+        button_frame.grid(row=1, column=2, rowspan=3)
+
+        image_file = Image.open("landing_page_img.jpg").resize((800,500))
+        image_tk = ImageTk.PhotoImage(image_file)
+
+        title = tk.Label(title_frame, text="Welcome to Poker Clock!", bg="black", fg="white", font=("Arial", 60, "bold"))
+        title.pack(fill="both", expand=True, padx=10, pady=10)
+        stock_image = tk.Label(body_frame, image=image_tk)
+        stock_image.image = image_tk
+        stock_image.pack(expand=True)
+        new_game_button = tk.Button(button_frame, text="New Game", command=self.new_game, bg="red", fg="white", relief="raised", font=("Arial", 30, "bold"))
+        new_game_button.pack(fill="both", expand=True, padx=10, pady=10)
+
+    def menu_bar(self):
         menubar = tk.Menu(self.root, bg="black", fg="white", relief="raised")
         self.root.config(menu=menubar)
 
-        self.bg_color = "#0B6623"
-        
         option_menu = tk.Menu(menubar, tearoff=0, bg="black", fg="white")
         menubar.add_cascade(label="Options", menu=option_menu)
         option_menu.add_command(label="New Game", command=self.new_game)
         option_menu.add_command(label="Edit Game", command=self.game_editor)
         option_menu.add_command(label="Game Overview", command=self.game_overview)
         option_menu.add_command(label="Restart Game", command=self.restart_game)
-        # option_menu.add_command(label="Landing Page", command=self.landing_page)
         option_menu.add_command(label="Exit", command=quit)
-
-        self.root.columnconfigure((0, 1, 2), weight=1)
-        self.root.rowconfigure((0, 1, 2, 3), weight=1)
-        
-        self.round_frame = tk.Frame(self.root, bg=self.bg_color)
-        self.round_frame.grid(row=0, column=0, columnspan=3, sticky="NESW")
-        self.button_frame = tk.Frame(self.root, bg=self.bg_color)
-        self.button_frame.grid(row=1, column=2, rowspan=2, sticky="NESW")
-        self.time_frame = tk.Frame(self.root, bg=self.bg_color)
-        self.time_frame.grid(row=1, column=0, rowspan=2, columnspan=2, sticky="NESW")
-        self.blind_frame = tk.Frame(self.root, bg=self.bg_color)
-        self.blind_frame.grid(row=3, column=0, columnspan=2, sticky="NESW")
-
-        self.round_number_label = tk.Label(self.round_frame, textvariable=self.round_num, bg="black", fg="white", font=("Arial", 60, "bold"))
-        self.round_number_label.pack(fill="both", expand=True)
-        self.timer_label = tk.Label(self.time_frame, textvariable=self.time_display, bg=self.bg_color, fg="white", font=("Arial", 120, "bold"))
-        self.timer_label.pack(fill="both", expand=True)
-        timer_button = tk.Button(self.button_frame, textvariable=self.timer_button_text, command=self.start_timer, bg="red", fg="white", font=("Arial", 30, "bold"), relief="raised")
-        timer_button.pack(fill="both", expand=True, pady=100, padx=10)
-        next_button = tk.Button(self.button_frame, text="Next Round", command=self.next_round, bg="black", fg="white", font=("Arial", 30, "bold"), relief="raised")
-        next_button.pack(fill="both", expand=True, pady=100, padx=10)
-        s_blind_label = tk.Label(self.blind_frame, textvariable=self.s_blind, bg="black", fg="white", relief="raised", font=("Arial", 30, "bold"))
-        s_blind_label.pack(side="left", fill="both", expand=True, pady=10, padx=50)
-        b_blind_label = tk.Label(self.blind_frame, textvariable=self.b_blind, bg="red", fg="white", relief="raised", font=("Arial", 30, "bold"))
-        b_blind_label.pack(side="right", fill="both", expand=True, pady=10, padx=50)
-
-    # def landing_page(self):
-
 
     def start_timer(self):
         if self.pause:
@@ -228,6 +255,8 @@ class PokerClock:
         tk.Button(button_frame, text="Save Game", command=self.save_game, bg="black", fg="white").pack(side="left", fill="both", expand=True)
         tk.Button(button_frame, text="Export Game", command=self.export_game, bg="red", fg="white").pack(side="left", fill="both", expand=True)
         tk.Button(button_frame, text="Import Game", command=self.import_game, bg="black", fg="white").pack(side="left", fill="both", expand=True)
+        if self.landing_page:
+            tk.Button(button_frame, text="Start Game", command=self.game_page, bg="red", fg="white").pack(side="left", fill="both", expand=True)
 
     def new_game(self):
         new_game_window = tk.Toplevel(self.root)
@@ -260,6 +289,7 @@ class PokerClock:
     def refresh_editor(self):
         for widget in self.round_column.winfo_children():
             widget.destroy()
+        self.time_list.clear()
         for widget in self.time_column.winfo_children():
             widget.destroy()
         self.s_blind_list.clear()
@@ -268,7 +298,6 @@ class PokerClock:
         self.b_blind_list.clear()
         for widget in self.b_blind_column.winfo_children():
             widget.destroy()
-        self.time_list.clear()
         for (index, round) in enumerate(self.rounds):
             tk.Label(self.round_column, text=round.num, bg="red", fg="white").pack(fill="both", expand=True)
             self.time_list.append(tk.Entry(self.time_column, width=6, bg="black", fg="white"))
@@ -352,16 +381,4 @@ class PokerClock:
             tk.Label(b_blind_column, text=round.b_blind, bg="black", fg="white").grid(row=index+1, column=3, padx=10, pady=10, sticky='NSWE')
 
 if __name__ == '__main__':
-    # Fix hard coded values later
-    round1 = Round(1, 30, 1000, 2000)
-    round2 = Round(2, 20, 2000, 4000)
-    round3 = Round(3, 20, 3000, 6000)
-    round4 = Round(4, 20, 5000, 10000)
-    round5 = Round(5, 20, 10000, 20000)
-    round6 = Round(6, 20, 15000, 30000)
-    round7 = Round(7, 20, 25000, 50000)
-    round8 = Round(8, 20, 50000, 100000)
-    round9 = Round(9, 20, 75000, 150000)
-    round10 = Round(10, 20, 100000, 200000)
-    rounds = [round1, round2, round3, round4, round5, round6, round7, round8, round9, round10]
-    PokerClock(rounds)
+    PokerClock()
