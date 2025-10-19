@@ -87,7 +87,9 @@ class LandingPage:
         new_game_button = tk.Button(
             button_frame,
             text="New Game",
-            command=lambda: EditorPage(poker_time, new=True),
+            command=lambda: EditorPage(
+                poker_time, new=True, from_landing_page=poker_time.is_landing_page
+            ),
             bg="red",
             fg="white",
             relief="raised",
@@ -108,8 +110,8 @@ class MenuBar:
     Menu bar class for options
     """
 
-    def __init__(self, game_page, poker_time):
-        self.root = poker_time.root
+    def __init__(self, game_page):
+        self.root = game_page.root
 
         menubar = tk.Menu(self.root, bg="black", fg="white", relief="raised")
         self.root.config(menu=menubar)
@@ -117,14 +119,14 @@ class MenuBar:
         option_menu = tk.Menu(menubar, tearoff=0, bg="black", fg="white")
         menubar.add_cascade(label="Options", menu=option_menu)
         option_menu.add_command(
-            label="New Game", command=lambda: EditorPage(poker_time, new=True)
+            label="New Game", command=lambda: EditorPage(game_page, new=True)
         )
         option_menu.add_command(
-            label="Edit Game", command=lambda: EditorPage(poker_time)
+            label="Edit Game", command=lambda: EditorPage(game_page)
         )
         option_menu.add_command(
             label="Game Overview",
-            command=lambda: GameOverview(self.root, poker_time.rounds),
+            command=lambda: GameOverview(self.root, game_page.rounds),
         )
         option_menu.add_command(label="Restart Game", command=game_page.restart_game)
         option_menu.add_command(label="Exit", command=sys.exit)
@@ -307,7 +309,7 @@ class GamePage:
             )
             self.b_blind = tk.StringVar(value=f"Big Blind: {self.game_state.b_blind:,}")
 
-            MenuBar(self, poker_time)
+            MenuBar(self)
             self.root.columnconfigure((0, 1, 2), weight=1)
             self.root.rowconfigure((0, 1, 2, 3), weight=1)
 
@@ -466,8 +468,6 @@ class GamePage:
         self.game_state.update_rounds(rounds)
 
 
-# FIX THIS
-# Unable to update game in progress
 class EditorPage:
     """
     Game editor window
@@ -476,15 +476,16 @@ class EditorPage:
     import or export game files as csv
     """
 
-    def __init__(self, poker_time, new=False):
-        window = tk.Toplevel(poker_time.root)
-        self.poker_time = poker_time
+    def __init__(self, ctx, new=False, from_landing_page=False):
+        window = tk.Toplevel(ctx.root)
+        self.ctx = ctx
+        self.from_landing_page = from_landing_page
         if new:
             window.title("New Game")
             self.rounds = []
         else:
             window.title("Edit Game")
-            self.rounds = self.poker_time.rounds
+            self.rounds = self.ctx.game_state.rounds
 
         window.geometry("800x600")
         window.configure(bg=BG_COLOR)
@@ -579,11 +580,11 @@ class EditorPage:
             bg="black",
             fg="white",
         ).pack(side="left", fill="both", expand=True)
-        if self.poker_time.is_landing_page:
+        if from_landing_page:
             tk.Button(
                 button_frame,
                 text="Start Game",
-                command=lambda: GamePage(self.poker_time),
+                command=lambda: GamePage(self.ctx),
                 bg="red",
                 fg="white",
             ).pack(side="left", fill="both", expand=True)
@@ -650,7 +651,11 @@ class EditorPage:
                 rounds.append(Round(i + 1))
             except ValueError:
                 rounds.append(Round(i + 1))
-        self.poker_time.rounds = rounds
+        if self.from_landing_page:
+            self.ctx.rounds = rounds
+        else:
+            self.ctx.game_state.update_rounds(rounds)
+            self.ctx.refresh_round_values()
         self.rounds = rounds
         self.refresh_editor()
 
@@ -673,9 +678,14 @@ class EditorPage:
             filetypes=(("CVS files", "*.csv"), ("All files", "*.*")),
         )
 
+        if self.from_landing_page:
+            source = self.ctx.rounds
+        else:
+            source = self.ctx.game_state.rounds
+
         if file:
             with open(file, "w", newline="", encoding="utf-8") as f:
-                for r in self.poker_time.rounds:
+                for r in source:
                     f.write(f"{r.num},{r.time},{r.s_blind},{r.b_blind}\n")
 
     def import_game(self):
@@ -703,7 +713,11 @@ class EditorPage:
                         Round(int(row[0]), int(row[1]), int(row[2]), int(row[3]))
                     )
 
-        self.poker_time.rounds = rounds
+        if self.from_landing_page:
+            self.ctx.rounds = rounds
+        else:
+            self.ctx.game_state.update_rounds(rounds)
+            self.ctx.refresh_round_values()
         self.rounds = rounds
         self.refresh_editor()
 
