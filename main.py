@@ -1,6 +1,11 @@
-import tkinter as tk
+"""
+Poker Time is a simple timer application built for poker tournaments.
+"""
+
+import sys
 import math
 import csv
+import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 from PIL import Image, ImageTk
@@ -9,6 +14,12 @@ BG_COLOR = "#0B6623"
 
 
 class PokerTime:
+    """
+    Main Function
+
+    Initalizes basic program functions and starts on the landing page
+    """
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Poker Time")
@@ -21,6 +32,12 @@ class PokerTime:
 
 
 class Round:
+    """
+    Round object
+
+    Games will be stored as an array of round objects
+    """
+
     def __init__(self, num, time=0, s_blind=0, b_blind=0):
         self.num = num
         self.time = time
@@ -32,6 +49,13 @@ class Round:
 
 
 class LandingPage:
+    """
+    Program start page
+
+    Serves as a welcome page for the user
+    From this page you are able to start a game
+    """
+
     def __init__(self, poker_time):
         self.root = poker_time.root
 
@@ -45,9 +69,6 @@ class LandingPage:
         button_frame = tk.Frame(self.root, bg=BG_COLOR)
         button_frame.grid(row=1, column=2, rowspan=3)
 
-        image_file = Image.open("landing_page_img.jpg").resize((800, 500))
-        image_tk = ImageTk.PhotoImage(image_file)
-
         title = tk.Label(
             title_frame,
             text="Welcome to Poker Time!",
@@ -56,9 +77,13 @@ class LandingPage:
             font=("Arial", 60, "bold"),
         )
         title.pack(fill="both", expand=True, padx=10, pady=10)
-        stock_image = tk.Label(image_frame, image=image_tk)
-        stock_image.image = image_tk
+
+        image_file = Image.open("assets/landing_page_img.jpg").resize((800, 500))
+        image = ImageTk.PhotoImage(image_file)
+        stock_image = tk.Label(image_frame, image=image)
+        stock_image.image = image
         stock_image.pack(expand=True)
+
         new_game_button = tk.Button(
             button_frame,
             text="New Game",
@@ -71,11 +96,18 @@ class LandingPage:
         new_game_button.pack(fill="both", expand=True, padx=10, pady=10)
 
     def destroy(self):
+        """
+        Destroy the landing page once a game is started
+        """
         for widget in self.root.winfo_children():
             widget.destroy()
 
 
 class MenuBar:
+    """
+    Menu bar class for options
+    """
+
     def __init__(self, game_page, poker_time):
         self.root = poker_time.root
 
@@ -95,10 +127,15 @@ class MenuBar:
             command=lambda: GameOverview(self.root, poker_time.rounds),
         )
         option_menu.add_command(label="Restart Game", command=game_page.restart_game)
-        option_menu.add_command(label="Exit", command=quit)
+        option_menu.add_command(label="Exit", command=sys.exit)
 
 
 class GameState:
+    """
+    Keeps track of what round it is and the blinds
+    Use for reference in other classes so there is no mixup
+    """
+
     def __init__(self, rounds):
         self.rounds = rounds
         self.round_index = 0
@@ -108,6 +145,9 @@ class GameState:
         self.b_blind = self.rounds[self.round_index].b_blind
 
     def next_round(self):
+        """
+        Increment round counter and update values
+        """
         if len(self.rounds) > self.round_index + 1:
             self.round_index += 1
         self.round_num = self.rounds[self.round_index].num
@@ -116,7 +156,22 @@ class GameState:
         self.b_blind = self.rounds[self.round_index].b_blind
 
     def restart_game(self):
+        """
+        Set round counter to zero and update values
+        """
         self.round_index = 0
+        self.round_num = self.rounds[self.round_index].num
+        self.time = self.rounds[self.round_index].time
+        self.s_blind = self.rounds[self.round_index].s_blind
+        self.b_blind = self.rounds[self.round_index].b_blind
+
+    def update_rounds(self, rounds):
+        """
+        Update round values when a change is made in the game editor
+        """
+        self.rounds = rounds
+        if self.round_index > len(rounds) - 1:
+            self.round_index = len(rounds) - 1
         self.round_num = self.rounds[self.round_index].num
         self.time = self.rounds[self.round_index].time
         self.s_blind = self.rounds[self.round_index].s_blind
@@ -124,6 +179,12 @@ class GameState:
 
 
 class Timer:
+    """
+    Timer object
+
+    Handles start/stop formatting and other logic
+    """
+
     def __init__(self, container, game_page):
         self.root = game_page.root
         self.game_page = game_page
@@ -141,6 +202,12 @@ class Timer:
         self.timer_label.pack(fill="both", expand=True)
 
     def start(self):
+        """
+        Start timer
+
+        if timer is started pause timer
+        if timer is zero reset timer
+        """
         if self.is_paused:
             self.unpause()
             self.game_page.timer_button.set_text("Pause Timer")
@@ -156,12 +223,19 @@ class Timer:
             self.game_page.timer_button.set_text("Resume Timer")
 
     def pause(self):
+        """Pause timer"""
         self.is_paused = True
 
     def unpause(self):
+        """Unpause timer"""
         self.is_paused = False
 
     def countdown(self):
+        """
+        Timer countdown
+
+        Main timer logic
+        """
         if self.time_remaining > 0 and not self.is_paused:
             self.time_var.set(self.format_time(self.time_remaining))
             self.time_remaining -= 1
@@ -174,6 +248,12 @@ class Timer:
             self.game_page.flash_screen()
 
     def format_time(self, time):
+        """
+        Format time for reable display
+
+        Args:
+            time (int): Time in seconds
+        """
         mins = time / 60
         secs = time % 60
         if secs < 10:
@@ -182,6 +262,12 @@ class Timer:
 
 
 class TimerButton:
+    """
+    Timer start/pause/reset button
+
+    abstracted so that the button text can be easily modified
+    """
+
     def __init__(self, container, game_page):
         self.timer_button_text = tk.StringVar(value="Start Timer")
         timer_button = tk.Button(
@@ -196,10 +282,15 @@ class TimerButton:
         timer_button.pack(fill="both", expand=True, pady=100, padx=10)
 
     def set_text(self, text):
+        """Set button label text"""
         self.timer_button_text.set(value=text)
 
 
 class GamePage:
+    """
+    Main game page
+    """
+
     def __init__(self, poker_time):
         self.root = poker_time.root
 
@@ -273,13 +364,25 @@ class GamePage:
             self.is_flashing = False
 
     def flash_screen(self, duration=10, speed=500):
+        """
+        Flashes screen on timer completion
+
+        Args:
+            duration (int): number of screen flash cycles
+            speed (int): time between flashes in miliseconds
+        """
         self.is_flashing = True
         self.flash_1(duration, speed)
 
     def stop_flashing(self):
+        """Stops screen flashing"""
         self.is_flashing = False
 
     def flash_1(self, duration, speed):
+        """
+        First part of flash sequence
+        should not be called directly
+        """
         if duration > 0 and self.is_flashing:
             self.root.configure(bg="black")
             self.round_frame.configure(bg="black")
@@ -299,6 +402,10 @@ class GamePage:
             self.blind_frame.configure(bg=BG_COLOR)
 
     def flash_2(self, duration, speed):
+        """
+        Second part of flash sequence
+        should not be called directly
+        """
         if self.is_flashing:
             self.root.configure(bg="white")
             self.round_frame.configure(bg="white")
@@ -318,6 +425,11 @@ class GamePage:
             self.blind_frame.configure(bg=BG_COLOR)
 
     def refresh_round_values(self):
+        """
+        Refresh values on screen
+
+        used on next round or game restart
+        """
         self.timer.time_remaining = self.game_state.time * 60
         self.timer.time_var.set(value=self.timer.format_time(self.timer.time_remaining))
         self.timer_button.set_text("Start Timer")
@@ -326,19 +438,44 @@ class GamePage:
         self.b_blind.set(f"Big Blind: {self.game_state.b_blind:,}")
 
     def next_round(self):
-        self.stop_flashing()
+        """
+        Starts next round
+
+        pauses timer and stops flashing if aplicable
+        """
         self.timer.pause()
+        self.stop_flashing()
         self.game_state.next_round()
         self.refresh_round_values()
 
     def restart_game(self):
-        self.stop_flashing()
+        """
+        Restarts game from round 1
+
+        pauses timer and stops flashing if aplicable
+        """
         self.timer.pause()
+        self.stop_flashing()
         self.game_state.restart_game()
         self.refresh_round_values()
 
+    def update_rounds(self, rounds):
+        """
+        update rounds
+        """
+        self.game_state.update_rounds(rounds)
 
+
+# FIX THIS
+# Unable to update game in progress
 class EditorPage:
+    """
+    Game editor window
+
+    create a new game or edit an existing one
+    import or export game files as csv
+    """
+
     def __init__(self, poker_time, new=False):
         window = tk.Toplevel(poker_time.root)
         self.poker_time = poker_time
@@ -452,6 +589,9 @@ class EditorPage:
             ).pack(side="left", fill="both", expand=True)
 
     def refresh_editor(self):
+        """
+        Refresh editor screen when changes are made
+        """
         for widget in self.round_column.winfo_children():
             widget.destroy()
         self.time_list.clear()
@@ -486,6 +626,9 @@ class EditorPage:
             self.b_blind_list[index].insert(tk.END, r.b_blind)
 
     def save_game(self):
+        """
+        Save editor values
+        """
         try:
             num_rounds = int(self.num_rounds_entry.get())
         except ValueError:
@@ -512,6 +655,11 @@ class EditorPage:
         self.refresh_editor()
 
     def export_game(self):
+        """
+        Export game as CSV
+
+        creates a folder in the documents directory
+        """
         documents_dir = Path.home() / "Documents"
         poker_dir = documents_dir / "PokerTime"
         poker_dir.mkdir(parents=True, exist_ok=True)
@@ -531,6 +679,11 @@ class EditorPage:
                     f.write(f"{r.num},{r.time},{r.s_blind},{r.b_blind}\n")
 
     def import_game(self):
+        """
+        Import a game from a CSV file
+
+        defaults to the PokerTime folder
+        """
         documents_dir = Path.home() / "Documents"
         poker_dir = documents_dir / "PokerTime"
         poker_dir.mkdir(parents=True, exist_ok=True)
@@ -556,6 +709,10 @@ class EditorPage:
 
 
 class GameOverview:
+    """
+    Basic overview page to see all round data
+    """
+
     def __init__(self, root, rounds):
         window = tk.Toplevel(root)
         window.title("Game Overview")
