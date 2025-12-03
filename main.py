@@ -334,7 +334,7 @@ class TimerButton:
             font=("Arial", 30, "bold"),
             relief="raised",
         )
-        timer_button.pack(fill="both", expand=True, pady=100, padx=10)
+        timer_button.pack(fill="both", expand=True, pady=50, padx=10)
 
     def set_text(self, text):
         """
@@ -404,7 +404,17 @@ class GamePage:
                 font=("Arial", 30, "bold"),
                 relief="raised",
             )
-            next_button.pack(fill="both", expand=True, pady=100, padx=10)
+            next_button.pack(fill="both", expand=True, pady=50, padx=10)
+            reset_button = tk.Button(
+                self.button_frame,
+                text="Reset Timer",
+                command=self.restart_timer,
+                bg="red",
+                fg="white",
+                font=("Arial", 30, "bold"),
+                relief="raised",
+            )
+            reset_button.pack(fill="both", expand=True, pady=50, padx=10)
             s_blind_label = tk.Label(
                 self.blind_frame,
                 textvariable=self.s_blind,
@@ -558,6 +568,13 @@ class GamePage:
         self.stop_flashing()
         self.game_state.restart_game()
         self.refresh_round_values()
+
+    def restart_timer(self):
+        self.timer.pause()
+        self.stop_flashing()
+        self.timer.time_remaining = self.timer.game_page.game_state.time * 60
+        self.timer.time_var.set(self.timer.format_time(self.timer.time_remaining))
+        self.timer.game_page.timer_button.set_text("Start Timer")
 
 
 class EditorPage:
